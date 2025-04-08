@@ -25,6 +25,15 @@ type ConsumerActor struct {
 	consumeChan     <-chan amqp.Delivery
 }
 
+const (
+	reconnectDelay = 5 * time.Second
+	reInitDelay    = 2 * time.Second
+)
+
+var (
+	errNotConnected = errors.New("not connected to a server")
+)
+
 // NewConsumerActor creates a new RabbitMQ consumer actor.
 func NewConsumerActor(queueName, addr string) *ConsumerActor {
 	actor := &ConsumerActor{
@@ -253,3 +262,4 @@ func (actor *ConsumerActor) handleClose() {
 	actor.isReady = false
 	close(actor.mailbox) // Close the mailbox to signal the run loop to exit
 }
+
