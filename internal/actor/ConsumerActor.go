@@ -48,7 +48,7 @@ func (actor *ConsumerActor) run() {
 		case ConsumeMessage:
 			actor.handleConsume()
 		case CloseMessage:
-			// TDDO
+			actor.handleClose()
 		case ProcessMessage:
 			actor.processDelivery(m.Delivery)
 		default:
