@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -7,7 +7,7 @@ import (
 
 // TelehealthMeasurement represents a document to be stored in MongoDB
 // for a single scan from the telehealth device.
-type TelehealthMeasurement struct {
+type Measurements struct {
 	ID                                      primitive.ObjectID `bson:"_id,omitempty"`
 	TimeStamp                               string             `bson:"time_stamp,omitempty"`                                  // String
 	BloodPressureUnit                       string             `bson:"blood_pressure_unit,omitempty"`                         // String ("mmHg" or "kPa")
