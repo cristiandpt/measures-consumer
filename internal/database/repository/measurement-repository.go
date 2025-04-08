@@ -27,7 +27,7 @@ func NewMeasurementRepository(db *mongo.Database) *MeasurementRepository {
 }
 
 // CreateUser inserts a new user into the database.
-func (r *MeasurementRepository) CreateMeasurementRepository(ctx context.Context, user *entity.Measurements) error {
+func (r *MeasurementRepository) CreateMeasurements(ctx context.Context, user *entity.Measurements) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

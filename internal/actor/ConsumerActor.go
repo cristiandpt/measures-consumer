@@ -1,14 +1,19 @@
 package consumer
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	model "github.com/cristiandpt/healthcare/measures-consumer/internal/model"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
 	"sync"
 	"time"
+
+	database "github.com/cristiandpt/healthcare/measures-consumer/internal/database"
+	"github.com/cristiandpt/healthcare/measures-consumer/internal/database/entity"
+	repository "github.com/cristiandpt/healthcare/measures-consumer/internal/database/repository"
+	model "github.com/cristiandpt/healthcare/measures-consumer/internal/model"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // ConsumerActor represents the actor responsible for consuming messages from RabbitMQ.
@@ -35,6 +40,45 @@ const (
 var (
 	errNotConnected = errors.New("not connected to a server")
 )
+
+var measurementsRepo *repository.MeasurementRepository
+
+func init() {
+	// Initialize MongoDB connection
+	database.ConnectMongoDB()
+	defer database.CloseMongoDB()
+
+	// Get the database instance
+	db := database.GetDatabase()
+
+	// Create a new user repository
+	measurementsRepo = repository.NewMeasurementRepository(db)
+
+	// Get user by ID
+	// retrievedMeasurement, err := userRepo.GetUserByID(ctx, newMeasurements.ID)
+	// if err != nil {
+	// 	log.Fatalf("Failed to get user by ID: %v", err)
+	// }
+	// if retrievedMeasurement != nil {
+	// 	fmt.Printf("Retrieved user: %+v\n", retrievedMeasurement)
+	// } else {
+	// 	fmt.Println("User not found.")
+	// }
+
+	// Get all users
+	// allUsers, err := userRepo.GetAllUsers(ctx)
+	// if err != nil {
+	// 	log.Fatalf("Failed to get all users: %v", err)
+	// }
+	// fmt.Printf("All users: %+v\n", allUsers)
+
+	// Delete the user
+	// deleteErr := measurementsRepo.DeleteUser(ctx, newMeasurements.ID)
+	// if deleteErr != nil {
+	// 	log.Fatalf("Failed to delete user: %v", deleteErr)
+	// }
+	// fmt.Println("User deleted.")
+}
 
 // NewConsumerActor creates a new RabbitMQ consumer actor.
 func NewConsumerActor(queueName, addr string) *ConsumerActor {
@@ -218,6 +262,15 @@ func (actor *ConsumerActor) processDeliveries() {
 func (actor *ConsumerActor) processDelivery(d model.Delivery) {
 	actor.logger.Printf("Received message [%v]: %q\n", d.DeliveryTag, d.Body)
 	// Saving to MomgoDB
+	// Example CRUD operations
+	ctx := context.Background()
+	// Create a new user
+	newMeasurements := &entity.Measurements{}
+	err := measurementsRepo.CreateMeasurements(ctx, newMeasurements)
+	if err != nil {
+		log.Fatalf("Failed to create user: %v", err)
+	}
+	fmt.Printf("Created user with ID: %s\n", newMeasurements.ID.Hex())
 	// Acknowledge the message to remove it from the queue
 	if err := d.Ack(false); err != nil {
 		actor.logger.Printf("Error acknowledging message [%v]: %s\n", d.DeliveryTag, err)
