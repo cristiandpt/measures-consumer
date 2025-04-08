@@ -81,3 +81,16 @@ func (actor *ConsumerActor) handleReconnect() {
 		}
 	}
 }
+
+// connect will create a new AMQP connection.
+func (actor *ConsumerActor) connect(addr string) (*amqp.Connection, error) {
+	conn, err := amqp.Dial(addr)
+	if err != nil {
+		return nil, err
+	}
+	actor.changeConnection(conn)
+	actor.isReady = true
+	actor.logger.Println("Connected to RabbitMQ!")
+	return conn, nil
+}
+
