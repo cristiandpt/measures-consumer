@@ -195,5 +195,14 @@ func (actor *ConsumerActor) handleConsume() {
 	actor.logger.Printf("Started consuming with tag: %s\n", actor.consumerTag)
 
 	// Start a new goroutine to continuously process deliveries
-	
+	go actor.processDeliveries()
+}
+
+// processDeliveries continuously reads deliveries from the consume channel and sends them
+// as ProcessMessage to the actor's mailbox for processing.
+func (actor *ConsumerActor) processDeliveries() {
+	for d := range actor.consumeChan {
+		actor.mailbox <- ProcessMessage{Delivery: Delivery(d)}
+	}
+	actor.logger.Println("Consumption stopped.")
 }
