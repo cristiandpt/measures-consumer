@@ -233,3 +233,23 @@ func (actor *ConsumerActor) Close() {
 	actor.wg.Wait() // Wait for the actor to finish
 	actor.logger.Println("Consumer actor stopped.")
 }
+
+// handleClose performs the closing of the channel and connection.
+func (actor *ConsumerActor) handleClose() {
+	actor.logger.Println("Closing connection...")
+	if actor.channel != nil {
+		if err := actor.channel.Cancel(actor.consumerTag, false); err != nil {
+			actor.logger.Printf("Error cancelling consumer [%s]: %s\n", actor.consumerTag, err)
+		}
+		if err := actor.channel.Close(); err != nil {
+			actor.logger.Printf("Error closing channel: %s\n", err)
+		}
+	}
+	if actor.conn != nil {
+		if err := actor.conn.Close(); err != nil {
+			actor.logger.Printf("Error closing connection: %s\n", err)
+		}
+	}
+	actor.isReady = false
+	close(actor.mailbox) // Close the mailbox to signal the run loop to exit
+}
