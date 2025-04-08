@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"errors"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
@@ -64,9 +65,8 @@ func (actor *ConsumerActor) run() {
 			actor.logger.Printf("Received unknown message type: %T\n", msg)
 		}
 	}
-		actor.logger.Println("Consumer actor mailbox closed.")
+	actor.logger.Println("Consumer actor mailbox closed.")
 }
-
 
 // handleReconnect will wait for a connection error and continuously attempt to reconnect.
 func (actor *ConsumerActor) handleReconnect() {
@@ -103,7 +103,6 @@ func (actor *ConsumerActor) connect(addr string) (*amqp.Connection, error) {
 	return conn, nil
 }
 
-
 // handleReInit will wait for a channel error and continuously attempt to re-initialize the channel.
 func (actor *ConsumerActor) handleReInit(conn *amqp.Connection) bool {
 	for {
@@ -132,7 +131,6 @@ func (actor *ConsumerActor) handleReInit(conn *amqp.Connection) bool {
 	}
 }
 
-
 // init will initialize the channel and declare the queue.
 func (actor *ConsumerActor) init(conn *amqp.Connection) error {
 	ch, err := conn.Channel()
@@ -142,11 +140,11 @@ func (actor *ConsumerActor) init(conn *amqp.Connection) error {
 
 	_, err = ch.QueueDeclare(
 		actor.queueName, // name
-		false,       // durable
-		false,       // delete when unused
-		false,       // exclusive
-		false,       // no-wait
-		nil,         // arguments
+		false,           // durable
+		false,           // delete when unused
+		false,           // exclusive
+		false,           // no-wait
+		nil,             // arguments
 	)
 	if err != nil {
 		return err
@@ -164,7 +162,6 @@ func (actor *ConsumerActor) init(conn *amqp.Connection) error {
 	actor.logger.Println("Channel initialized and queue declared.")
 	return nil
 }
-
 
 // changeConnection takes a new connection and updates the close listener.
 func (actor *ConsumerActor) changeConnection(connection *amqp.Connection) {
@@ -190,11 +187,11 @@ func (actor *ConsumerActor) handleConsume() {
 	deliveries, err := actor.channel.Consume(
 		actor.queueName,   // queue
 		actor.consumerTag, // consumer
-		false,         // auto-ack
-		false,         // exclusive
-		false,         // no-local
-		false,         // no-wait
-		nil,           // args
+		false,             // auto-ack
+		false,             // exclusive
+		false,             // no-local
+		false,             // no-wait
+		nil,               // args
 	)
 	if err != nil {
 		actor.logger.Printf("Failed to start consuming: %s\n", err)
@@ -262,4 +259,3 @@ func (actor *ConsumerActor) handleClose() {
 	actor.isReady = false
 	close(actor.mailbox) // Close the mailbox to signal the run loop to exit
 }
-
