@@ -170,3 +170,30 @@ func (actor *ConsumerActor) changeChannel(channel *amqp.Channel) {
 	actor.notifyChanClose = make(chan *amqp.Error, 1)
 	actor.channel.NotifyClose(actor.notifyChanClose)
 }
+
+// handleConsume starts consuming messages from the queue.
+func (actor *ConsumerActor) handleConsume() {
+	if !actor.isReady {
+		actor.logger.Println("Not connected, cannot start consuming.")
+		return
+	}
+
+	deliveries, err := actor.channel.Consume(
+		actor.queueName,   // queue
+		actor.consumerTag, // consumer
+		false,         // auto-ack
+		false,         // exclusive
+		false,         // no-local
+		false,         // no-wait
+		nil,           // args
+	)
+	if err != nil {
+		actor.logger.Printf("Failed to start consuming: %s\n", err)
+		return
+	}
+	actor.consumeChan = deliveries
+	actor.logger.Printf("Started consuming with tag: %s\n", actor.consumerTag)
+
+	// Start a new goroutine to continuously process deliveries
+	
+}
