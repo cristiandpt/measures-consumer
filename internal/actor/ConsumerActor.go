@@ -158,8 +158,15 @@ func (actor *ConsumerActor) init(conn *amqp.Connection) error {
 
 
 // changeConnection takes a new connection and updates the close listener.
-func (a *ConsumerActor) changeConnection(connection *amqp.Connection) {
-	a.conn = connection
-	a.notifyConnClose = make(chan *amqp.Error, 1)
-	a.conn.NotifyClose(a.notifyConnClose)
+func (actor *ConsumerActor) changeConnection(connection *amqp.Connection) {
+	actor.conn = connection
+	actor.notifyConnClose = make(chan *amqp.Error, 1)
+	actor.conn.NotifyClose(a.notifyConnClose)
+}
+
+// changeChannel takes a new channel and updates the channel listeners.
+func (actor *ConsumerActor) changeChannel(channel *amqp.Channel) {
+	actor.channel = channel
+	actor.notifyChanClose = make(chan *amqp.Error, 1)
+	actor.channel.NotifyClose(actor.notifyChanClose)
 }
