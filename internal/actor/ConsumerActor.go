@@ -123,3 +123,35 @@ func (actor *ConsumerActor) handleReInit(conn *amqp.Connection) bool {
 	}
 }
 
+
+// init will initialize the channel and declare the queue.
+func (actor *ConsumerActor) init(conn *amqp.Connection) error {
+	ch, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+
+	_, err = ch.QueueDeclare(
+		actor.queueName, // name
+		false,       // durable
+		false,       // delete when unused
+		false,       // exclusive
+		false,       // no-wait
+		nil,         // arguments
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := ch.Qos(
+		1,     // prefetchCount: process one message at a time
+		0,     // prefetchSize: no limit
+		false, // global: apply per consumer
+	); err != nil {
+		return fmt.Errorf("failed to set QoS: %w", err)
+	}
+
+	actor.changeChannel(ch)
+	actor.logger.Println("Channel initialized and queue declared.")
+	return nil
+}
