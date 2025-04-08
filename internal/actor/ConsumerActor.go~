@@ -1,0 +1,19 @@
+package consumer
+
+import ()
+
+// ConsumerActor represents the actor responsible for consuming messages from RabbitMQ.
+type ConsumerActor struct {
+	queueName       string
+	addr            string
+	conn            *amqp.Connection
+	channel         *amqp.Channel
+	notifyConnClose chan *amqp.Error
+	notifyChanClose chan *amqp.Error
+	isReady         bool
+	mailbox         chan interface{} // Actor's mailbox for messages
+	wg              sync.WaitGroup
+	logger          *log.Logger
+	consumerTag     string // Identifier for the consumer
+	consumeChan     <-chan amqp.Delivery
+}
