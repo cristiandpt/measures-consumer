@@ -94,3 +94,32 @@ func (actor *ConsumerActor) connect(addr string) (*amqp.Connection, error) {
 	return conn, nil
 }
 
+
+// handleReInit will wait for a channel error and continuously attempt to re-initialize the channel.
+func (actor *ConsumerActor) handleReInit(conn *amqp.Connection) bool {
+	for {
+		if err := actor.init(conn); err != nil {
+			actor.logger.Printf("Failed to initialize channel: %s. Retrying in %s...\n", err, reInitDelay)
+			select {
+			case <-time.After(reInitDelay):
+			case <-actor.notifyConnClose:
+				a.logger.Println("Connection closed. Reconnecting...")
+				return false
+			case <-actor.mailbox: // Allow exiting if the actor is closed during re-init
+				return true
+			}
+			continue
+		}
+
+		select {
+		case <-actor.mailbox: // Allow exiting if the actor is closed
+			return true
+		case <-actor.notifyConnClose:
+			actor.logger.Println("Connection closed. Reconnecting...")
+			return false
+		case <-actor.notifyChanClose:
+			actor.logger.Println("Channel closed. Re-initializing...")
+		}
+	}
+}
+
