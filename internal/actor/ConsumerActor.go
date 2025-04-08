@@ -221,3 +221,8 @@ func (actor *ConsumerActor) processDelivery(d Delivery) {
 		actor.logger.Printf("Message [%v] acknowledged\n", d.DeliveryTag)
 	}
 }
+
+// Consume sends a message to the actor's mailbox to start consuming.
+func (actor *ConsumerActor) Consume() {
+	actor.mailbox <- ConsumeMessage{}
+}
