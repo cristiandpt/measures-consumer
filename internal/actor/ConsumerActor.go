@@ -226,3 +226,10 @@ func (actor *ConsumerActor) processDelivery(d Delivery) {
 func (actor *ConsumerActor) Consume() {
 	actor.mailbox <- ConsumeMessage{}
 }
+
+// Close signals the actor to shut down.
+func (actor *ConsumerActor) Close() {
+	actor.mailbox <- CloseMessage{}
+	actor.wg.Wait() // Wait for the actor to finish
+	actor.logger.Println("Consumer actor stopped.")
+}
