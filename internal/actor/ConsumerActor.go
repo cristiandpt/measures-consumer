@@ -46,7 +46,7 @@ func (actor *ConsumerActor) run() {
 	for msg := range actor.mailbox {
 		switch m := msg.(type) {
 		case ConsumeMessage:
-			// TDDO
+			actor.handleConsume()
 		case CloseMessage:
 			// TDDO
 		case ProcessMessage:
@@ -206,3 +206,4 @@ func (actor *ConsumerActor) processDeliveries() {
 	}
 	actor.logger.Println("Consumption stopped.")
 }
+
