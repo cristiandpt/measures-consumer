@@ -3,6 +3,7 @@ package consumer
 import (
 	"errors"
 	"fmt"
+	model "github.com/cristiandpt/healthcare/measures-consumer/internal/model"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
@@ -55,11 +56,11 @@ func (actor *ConsumerActor) run() {
 
 	for msg := range actor.mailbox {
 		switch m := msg.(type) {
-		case ConsumeMessage:
+		case model.ConsumeMessage:
 			actor.handleConsume()
-		case CloseMessage:
+		case model.CloseMessage:
 			actor.handleClose()
-		case ProcessMessage:
+		case model.ProcessMessage:
 			actor.processDelivery(m.Delivery)
 		default:
 			actor.logger.Printf("Received unknown message type: %T\n", msg)
@@ -111,7 +112,7 @@ func (actor *ConsumerActor) handleReInit(conn *amqp.Connection) bool {
 			select {
 			case <-time.After(reInitDelay):
 			case <-actor.notifyConnClose:
-				a.logger.Println("Connection closed. Reconnecting...")
+				actor.logger.Println("Connection closed. Reconnecting...")
 				return false
 			case <-actor.mailbox: // Allow exiting if the actor is closed during re-init
 				return true
@@ -167,7 +168,7 @@ func (actor *ConsumerActor) init(conn *amqp.Connection) error {
 func (actor *ConsumerActor) changeConnection(connection *amqp.Connection) {
 	actor.conn = connection
 	actor.notifyConnClose = make(chan *amqp.Error, 1)
-	actor.conn.NotifyClose(a.notifyConnClose)
+	actor.conn.NotifyClose(actor.notifyConnClose)
 }
 
 // changeChannel takes a new channel and updates the channel listeners.
@@ -208,13 +209,13 @@ func (actor *ConsumerActor) handleConsume() {
 // as ProcessMessage to the actor's mailbox for processing.
 func (actor *ConsumerActor) processDeliveries() {
 	for d := range actor.consumeChan {
-		actor.mailbox <- ProcessMessage{Delivery: Delivery(d)}
+		actor.mailbox <- model.ProcessMessage{Delivery: model.Delivery(d)}
 	}
 	actor.logger.Println("Consumption stopped.")
 }
 
 // processDelivery handles the processing of a single received message.
-func (actor *ConsumerActor) processDelivery(d Delivery) {
+func (actor *ConsumerActor) processDelivery(d model.Delivery) {
 	actor.logger.Printf("Received message [%v]: %q\n", d.DeliveryTag, d.Body)
 	// Saving to MomgoDB
 	// Acknowledge the message to remove it from the queue
@@ -230,12 +231,12 @@ func (actor *ConsumerActor) processDelivery(d Delivery) {
 
 // Consume sends a message to the actor's mailbox to start consuming.
 func (actor *ConsumerActor) Consume() {
-	actor.mailbox <- ConsumeMessage{}
+	actor.mailbox <- model.ConsumeMessage{}
 }
 
 // Close signals the actor to shut down.
 func (actor *ConsumerActor) Close() {
-	actor.mailbox <- CloseMessage{}
+	actor.mailbox <- model.CloseMessage{}
 	actor.wg.Wait() // Wait for the actor to finish
 	actor.logger.Println("Consumer actor stopped.")
 }
