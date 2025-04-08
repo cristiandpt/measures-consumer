@@ -155,3 +155,11 @@ func (actor *ConsumerActor) init(conn *amqp.Connection) error {
 	actor.logger.Println("Channel initialized and queue declared.")
 	return nil
 }
+
+
+// changeConnection takes a new connection and updates the close listener.
+func (a *ConsumerActor) changeConnection(connection *amqp.Connection) {
+	a.conn = connection
+	a.notifyConnClose = make(chan *amqp.Error, 1)
+	a.conn.NotifyClose(a.notifyConnClose)
+}
