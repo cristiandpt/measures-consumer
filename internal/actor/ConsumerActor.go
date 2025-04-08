@@ -56,5 +56,28 @@ func (actor *ConsumerActor) run() {
 		}
 	}
 		actor.logger.Println("Consumer actor mailbox closed.")
+}
 
+
+// handleReconnect will wait for a connection error and continuously attempt to reconnect.
+func (actor *ConsumerActor) handleReconnect() {
+	for {
+		actor.isReady = false
+		actor.logger.Println("Attempting to connect...")
+
+		conn, err := actor.connect(actor.addr)
+		if err != nil {
+			actor.logger.Printf("Failed to connect: %s. Retrying in %s...\n", err, reconnectDelay)
+			select {
+			case <-time.After(reconnectDelay):
+			case <-actor.mailbox: // Allow exiting if the actor is closed during reconnect
+				return
+			}
+			continue
+		}
+
+		if actor.handleReInit(conn) {
+			return // Exit if re-initialization was part of a shutdown
+		}
+	}
 }
