@@ -50,7 +50,7 @@ func (actor *ConsumerActor) run() {
 		case CloseMessage:
 			// TDDO
 		case ProcessMessage:
-			// TDDO
+			actor.processDelivery(m.Delivery)
 		default:
 			actor.logger.Printf("Received unknown message type: %T\n", msg)
 		}
@@ -207,3 +207,17 @@ func (actor *ConsumerActor) processDeliveries() {
 	actor.logger.Println("Consumption stopped.")
 }
 
+// processDelivery handles the processing of a single received message.
+func (actor *ConsumerActor) processDelivery(d Delivery) {
+	actor.logger.Printf("Received message [%v]: %q\n", d.DeliveryTag, d.Body)
+	// Saving to MomgoDB
+	// Acknowledge the message to remove it from the queue
+	if err := d.Ack(false); err != nil {
+		actor.logger.Printf("Error acknowledging message [%v]: %s\n", d.DeliveryTag, err)
+		// Optionally, you can nack the message and requeue or discard it
+		// d.Nack(false, true) // requeue
+		// d.Nack(false, false) // discard
+	} else {
+		actor.logger.Printf("Message [%v] acknowledged\n", d.DeliveryTag)
+	}
+}
